@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MarketMind AI | Premium Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code&family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --accent-1: #6a11cb; 
+            --accent-2: #2575fc; 
+            --accent-3: #ff0844;
+            --up: #00e676; 
+            --down: #ff3d00; 
+        }
+        
+        body { 
+            background-color: #050508; 
+            color: #ffffff; 
+            font-family: 'Outfit', sans-serif; 
+            margin: 0; 
+            padding: 40px; 
+            overflow-x: hidden; 
+            min-height: 100vh;
+        }
+
+        /* --- BACKGROUND AURORA ANIMATION --- */
+        .background-blobs {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1;
+            overflow: hidden;
+            background: #050508;
+        }
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: 0.6;
+            animation: float 20s infinite alternate ease-in-out;
+        }
+        .blob-1 { background: var(--accent-1); width: 500px; height: 500px; top: -100px; left: -100px; }
+        .blob-2 { background: var(--accent-2); width: 600px; height: 600px; bottom: -200px; right: -100px; animation-delay: -5s; }
+        .blob-3 { background: #8e2de2; width: 400px; height: 400px; top: 40%; left: 30%; animation-delay: -10s; opacity: 0.4; }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(150px, 100px) scale(1.1); }
+            100% { transform: translate(-50px, 200px) scale(0.9); }
+        }
+
+        .container { max-width: 900px; margin: auto; position: relative; z-index: 1; }
+        
+        /* Premium Frosted Glass Card */
+        .glass-card { 
+            background: rgba(255, 255, 255, 0.05); 
+            border: 1px solid rgba(255, 255, 255, 0.15); 
+            backdrop-filter: blur(24px); 
+            -webkit-backdrop-filter: blur(24px);
+            border-radius: 30px; 
+            padding: 45px; 
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+            animation: slideUpFade 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .header { text-align: center; margin-bottom: 45px; animation: fadeInDown 1s ease-out; }
+        .header h1 { 
+            font-size: 3.5rem; margin: 0; 
+            background: linear-gradient(to right, #fff, #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700; letter-spacing: -1px;
+        }
+
+        .search-container { display: flex; gap: 15px; margin-bottom: 40px; justify-content: center; flex-wrap: wrap; }
+        select, input { 
+            background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); 
+            color: #fff; padding: 18px 24px; border-radius: 16px; font-size: 1rem; 
+            outline: none; transition: all 0.3s ease; font-family: 'Outfit';
+        }
+        input:focus, select:focus { border-color: rgba(255,255,255,0.4); background: rgba(0,0,0,0.5); }
+        input { flex-grow: 1; font-family: 'Fira Code'; font-size: 1.1rem; }
+        
+        .btn { 
+            padding: 0 35px; border-radius: 16px; cursor: pointer; transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
+            font-weight: 700; border: none; height: 58px; text-decoration: none; 
+            display: flex; align-items: center; justify-content: center; font-size: 1.05rem;
+        }
+        .btn-predict { 
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2)); 
+            color: #fff; box-shadow: 0 10px 20px rgba(37, 117, 252, 0.3);
+        }
+        .btn-reset { background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); }
+        .btn:hover { transform: translateY(-3px) scale(1.02); }
+        .btn-predict:hover { box-shadow: 0 15px 25px rgba(37, 117, 252, 0.5); }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 30px; }
+        .stat-box { 
+            background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01)); 
+            padding: 25px; border-radius: 20px; text-align: center; transition: 0.4s; 
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .stat-box:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.2); }
+        .stat-value { font-size: 2.8rem; font-weight: 700; font-family: 'Fira Code'; margin-top: 10px; }
+        
+        .status-badge { 
+            font-size: 1.4rem; font-weight: 700; text-align: center; padding: 18px; 
+            border-radius: 16px; margin-top: 20px; transition: 0.5s; letter-spacing: 1px;
+        }
+        .up { color: var(--up); background: rgba(0, 230, 118, 0.1); border: 1px solid rgba(0, 230, 118, 0.2); }
+        .down { color: var(--down); background: rgba(255, 61, 0, 0.1); border: 1px solid rgba(255, 61, 0, 0.2); }
+
+        .stock-tag { 
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); 
+            color: #fff; padding: 10px 20px; border-radius: 30px; text-decoration: none; 
+            transition: 0.3s; font-size: 0.95rem; display: inline-block; animation: fadeIn 1s ease-in; 
+        }
+        .stock-tag:hover { background: rgba(255,255,255,0.15); transform: translateY(-3px); }
+        .stock-tag span { color: #a5b4fc; font-size: 0.8rem; margin-left: 8px; }
+
+        /* SLEEK LOADER */
+        #loader { 
+            display: none; margin: 30px auto; width: 50px; height: 50px; 
+            border: 3px solid rgba(255,255,255,0.1); 
+            border-radius: 50%; 
+            border-top-color: #a5b4fc; 
+            animation: spin 1s ease-in-out infinite; 
+        }
+        
+        /* KEYFRAMES */
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUpFade { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fillBar { from { width: 0%; } to { width: var(--target-width); } }
+    </style>
+</head>
+<body>
+
+<div class="background-blobs">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+</div>
+
+<div class="container">
+    <div class="header">
+        <h1>MarketMind AI</h1>
+        <p style="color: #a5b4fc; font-size: 1.1rem; letter-spacing: 0.5px;">Next-Gen Financial Forecasting Engine</p>
+    </div>
+
+    <div class="glass-card">
+        <form class="search-container" method="GET" onsubmit="document.getElementById('loader').style.display='block'; document.getElementById('results-area').style.opacity='0.2';">
+            <select name="exchange">
+                <option value="NSE" {% if exchange == 'NSE' %}selected{% endif %}>🇮🇳 NSE</option>
+                <option value="US" {% if exchange == 'US' %}selected{% endif %}>🇺🇸 NASDAQ</option>
+            </select>
+            
+            <input type="text" name="ticker" list="db-stocks" placeholder="Search Database..." value="{{ ticker_display }}" required>
+            
+            <datalist id="db-stocks">
+                {% for symbol, name in available_stocks.items %}
+                    <option value="{{ symbol }}">{{ name }}</option>
+                {% endfor %}
+            </datalist>
+
+            <button type="submit" class="btn btn-predict">Forecast</button>
+            <a href="/" class="btn btn-reset">Clear</a>
+        </form>
+
+        <div id="loader"></div>
+
+        <div id="results-area" style="transition: opacity 0.4s;">
+            {% if is_home %}
+                <div style="text-align:center; padding: 50px 20px; color: #888; animation: fadeIn 1.5s;">
+                    <p style="font-size: 1.2rem;">Awaiting input to initiate neural sequence...</p>
+                </div>
+            {% elif error %}
+                <div style="text-align: center; padding: 20px;">
+                    <div style="color: #ffb7b2; background: rgba(255, 61, 0, 0.1); padding: 15px; border-radius: 12px; font-size: 1.1rem; margin-bottom: 25px; animation: slideUpFade 0.5s;"> 
+                        ⚠️ {{ error }} 
+                    </div>
+                    
+                    {% if available_stocks %}
+                        <p style="color: #a5b4fc; margin-bottom: 20px;">Try one of our actively tracked assets:</p>
+                        <div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;">
+                            {% for symbol, name in available_stocks.items %}
+                                <a href="/?exchange=NSE&ticker={{ symbol }}" class="stock-tag">
+                                    {{ symbol }} <span>{{ name }}</span>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+            {% else %}
+                <h2 style="text-align:center; margin-bottom:30px; font-size: 2rem; letter-spacing: -0.5px; animation: fadeInDown 0.5s;">{{ company_name }}</h2>
+                <div class="stats-grid">
+                    <div class="stat-box" style="animation: slideUpFade 0.6s;">
+                        <div style="color:#a5b4fc; font-size:0.85rem; font-weight: 700; letter-spacing: 1px;">LAST CLOSE</div>
+                        <div class="stat-value">{{ currency }}{{ today_price }}</div>
+                    </div>
+                    <div class="stat-box" style="animation: slideUpFade 0.8s;">
+                        <div style="color:#a5b4fc; font-size:0.85rem; font-weight: 700; letter-spacing: 1px;">AI TARGET (T+1)</div>
+                        <div class="stat-value" style="background: linear-gradient(to right, #a5b4fc, #fff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">{{ currency }}{{ tomorrow_price }}</div>
+                    </div>
+                </div>
+
+                <div class="status-badge {% if 'UP' in status %}up{% else %}down{% endif %}">
+                    Trend Projection: {{ status }}
+                </div>
+
+                <div style="margin-top: 25px; background: rgba(0,0,0,0.2); padding: 25px; border-radius: 20px; animation: slideUpFade 1s;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.95rem;">
+                        <span style="color: #a5b4fc; font-weight: 700; letter-spacing: 1px;">CONFIDENCE SCORE</span>
+                        <span style="color: #fff; font-weight: 700; font-family: 'Fira Code';">{{ confidence }}%</span>
+                    </div>
+                    <div style="width: 100%; background: rgba(255,255,255,0.05); border-radius: 10px; height: 8px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);">
+                        <div style="--target-width: {{ confidence }}%; width: 0%; background: linear-gradient(90deg, var(--accent-1), var(--accent-2)); height: 100%; border-radius: 10px; animation: fillBar 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.5s;"></div>
+                    </div>
+                </div>
+
+                <div style="animation: fadeIn 1.5s; background: rgba(0,0,0,0.2); padding: 20px; border-radius: 20px; margin-top: 25px;">
+                    <canvas id="mainChart" height="280"></canvas>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    {% if not error and not is_home %}
+    const ctx = document.getElementById('mainChart').getContext('2d');
+    
+    // Gradient for the line chart to match the new theme
+    let gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, 'rgba(37, 117, 252, 0.5)'); // accent-2 with opacity
+    gradient.addColorStop(1, 'rgba(106, 17, 203, 0.0)'); // accent-1 fading out
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ dates|safe }},
+            datasets: [{
+                label: 'Price ({{ ticker_display }})',
+                data: {{ past_prices|safe }},
+                borderColor: '#a5b4fc',
+                backgroundColor: gradient,
+                fill: true,
+                borderWidth: 3,
+                tension: 0.4, // Smooth curves
+                pointRadius: 0,
+                pointHoverRadius: 6,
+                pointHoverBackgroundColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 2500,
+                easing: 'easeOutQuart'
+            },
+            plugins: { 
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    titleFont: { family: 'Outfit', size: 14 },
+                    bodyFont: { family: 'Fira Code', size: 14 },
+                    padding: 15,
+                    cornerRadius: 10,
+                    displayColors: false
+                }
+            },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#a5b4fc', font: {family: 'Outfit'} } },
+                x: { grid: { display: false }, ticks: { color: '#a5b4fc', font: {family: 'Outfit'} } }
+            }
+        }
+    });
+    {% endif %}
+</script>
+
+</body>
+</html>
